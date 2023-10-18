@@ -1,0 +1,193 @@
+openapi: 3.0.1
+info:
+  title: Todo Application API
+  version: 1.0.0
+  description: A simple Todo application with authentication.
+
+servers:
+  - url: http://localhost:3000  # Adjust this to your server URL if needed
+
+paths:
+  /signup:
+    post:
+      summary: User registration.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: User successfully registered.
+        '400':
+          description: Bad request (e.g., username already taken).
+
+  /login:
+    post:
+      summary: User authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: User successfully authenticated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Unauthorized (e.g., incorrect username or password).
+
+  /todos:
+    get:
+      summary: List all todos for the authenticated user.
+      security:
+        - BearerToken: []
+      responses:
+        '200':
+          description: A list of todos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Todo'
+        '401':
+          description: Unauthorized.
+    post:
+      summary: Create a new todo.
+      security:
+        - BearerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TodoCreate'
+      responses:
+        '201':
+          description: Todo successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Todo'
+        '401':
+          description: Unauthorized.
+
+  /todos/{todoId}:
+    put:
+      summary: Update a todo.
+      security:
+        - BearerToken: []
+      parameters:
+        - in: path
+          name: todoId
+          required: true
+          schema:
+            type: string
+          description: The ID of the todo to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TodoUpdate'
+      responses:
+        '200':
+          description: Todo successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Todo'
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Todo not found.
+    delete:
+      summary: Delete a todo.
+      security:
+        - BearerToken: []
+      parameters:
+        - in: path
+          name: todoId
+          required: true
+          schema:
+            type: string
+          description: The ID of the todo to delete.
+      responses:
+        '200':
+          description: Todo successfully deleted.
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Todo not found.
+
+  /todos/search:
+    get:
+      summary: Search todos based on text.
+      security:
+        - BearerToken: []
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+          description: The query text to search for in todos.
+      responses:
+        '200':
+          description: A list of matching todos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Todo'
+        '401':
+          description: Unauthorized.
+
+components:
+  schemas:
+    Todo:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        completed:
+          type: boolean
+    TodoCreate:
+      type: object
+      properties:
+        text:
+          type: string
+    TodoUpdate:
+      type: object
+      properties:
+        text:
+          type: string
+        completed:
+          type: boolean
+
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
